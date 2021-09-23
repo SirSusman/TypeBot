@@ -61,26 +61,27 @@ def loadPickle(input_file):
 
 
 
-def recreateData(cleaning1,cleaning2):
-	scene_data = pickle.load(open("all_scenes.p","rb"))
-	corpuses = buildCorpuses(scene_data)
-	corpuses = {key: [value] for key,value in corpuses.items()}
-	
+def recreateData(cleaning1,cleaning2,input_dict):
+	print(input_dict)
 	#Convert character corpuses into data frames
-	corpus_df = pd.DataFrame.from_dict(corpuses).transpose()#,orient = 'columns').transpose()
+	corpus_df = pd.DataFrame.from_dict(input_dict).transpose()
 	corpus_df.columns = ['transcript']
 	corpus_df = corpus_df.sort_index()
+	print(corpus_df.index)
+
+
 	
 	#More cleaning could be done like stemming, bi-grams (thank you becomes thankyou).
-	df_clean = pd.DataFrame(corpus_df.transcript.apply(cleaning1))
-	df_clean = pd.DataFrame(df_clean.transcript.apply(cleaning2))
+	#df_clean = pd.DataFrame(corpus_df.transcript.apply(cleaning1))
+	#df_clean = pd.DataFrame(df_clean.transcript.apply(cleaning2))
 	
-	pickleData(corpus_df,"corpus")
-	pickleData(df_clean,"df_clean")
+	#pickleData(corpus_df,"corpus_dict")
+	#pickleData(df_clean,"df_clean")
+	#return corpus_df,df_clean
 
-def loadData():
-	corpus_df = loadPickle("corpus")
-	df_clean = loadPickle("df_clean")
+def loadData(file1,file2):
+	corpus_df = loadPickle(file1)
+	df_clean = loadPickle(file2)
 	return corpus_df, df_clean
 
 
@@ -103,23 +104,37 @@ def main():
 	#Data Frame apply automatically passes the stuff into the lambda
 	round1 = lambda x: cleaningRound1(x)
 	round2 = lambda x: cleaningRound2(x)
-	
+	character_dict = pickle.load(open("character_dict.p","rb"))
+
+	for key in character_dict:
+		character_dict[key] = [" ".join(value for value in character_dict[key])]
+
+	#print(character_dict)
+	recreateData(round1,round2,character_dict)
+	#print(character_dict)
+	#Now we have the character dict as a list of strings.
+	# We have to consolidate into one string, then go through the cleaning rounds and convert it
+	# to a dataframe. You can use " ".join
+
+
+
 	#recreateData(round1, round2)
-	corpus_df, df_clean = loadData()
+	corpus_df, df_clean = loadData("corpus_dict","df_clean")
 	#print(corpus_df.transcript.loc['Michael'])
 	#print(df_clean.transcript.loc['Michael'])
 	
 	#pass in data frame
 	tokenizeData(df_clean)
-	data_dtm = loadPickle("data_dtm")
+	#data_dtm = loadPickle("data_dtm")
 
 	#dtm = pd.read_pickle("corpuses/dtm.pkl")
 	#data_dtm = loadPickle("dtm")
-	data_dtm = data_dtm.transpose()
+	#data_dtm = data_dtm.transpose()
+	#print(data_dtm)
 	#pickleData(data_dtm,"dtm")
 	#print(data_dtm.loc[['Angela',"Michael","Mr. Brown"]])
 	#print(data_dtm)
-	
+	"""
 	top30_dict = {}
 	for c in data_dtm.columns:
 		top = data_dtm[c].sort_values(ascending = False).head(30)
@@ -132,7 +147,7 @@ def main():
 			print(v)
 	
 	print("Done")
-
+"""
 
 #=============Functions===============
 main()
